@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:logbook_app_059/components/header_bar.dart';
+import 'package:logbook_app_059/components/history_section.dart';
 import 'package:logbook_app_059/counter_controller.dart';
 
 class CounterView extends StatefulWidget {
@@ -10,21 +12,45 @@ class CounterView extends StatefulWidget {
 class _CounterViewState extends State<CounterView> {
   final CounterController _controller = CounterController();
 
+  void resetDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Konfirmasi Reset"),
+          content: const Text("Apakah Anda yakin ingin mereset counter?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() => _controller.reset());
+                Navigator.pop(context);
+              },
+              child: const Text("Ya, Reset"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("LogBook: RIDHO S MVC"),
-        backgroundColor: Colors.blue,
-      ),
+      appBar: HeaderBar(),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text("Total Hitungan:"),
-            Text('${_controller.value}', style: const TextStyle(fontSize: 40)),
+            Text('${_controller.value}', style: const TextStyle(fontSize: 60)),
             SizedBox(
-              height: 50,
+              height: 80,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -62,39 +88,11 @@ class _CounterViewState extends State<CounterView> {
               ),
             ),
             SizedBox(height: 20),
-            Text(
-              "History",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            SizedBox(
-              height: 200,
-              width: 300,
-              child: ListView.builder(
-                itemCount: _controller.history.length,
-                itemBuilder: (context, index) {
-                  String item = _controller.history[index];
-                  bool isPlus = item.startsWith("+");
-
-                  return ListTile(
-                    dense: true,
-                    visualDensity:
-                        VisualDensity.compact,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: 8,
-                    ),
-                    leading: Icon(
-                      isPlus ? Icons.add : Icons.remove,
-                      color: isPlus ? Colors.green : Colors.red,
-                    ),
-                    title: Text(item),
-                  );
-                },
-              ),
-            ),
+            HistorySection(controller: _controller),
           ],
         ),
       ),
+
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -102,18 +100,22 @@ class _CounterViewState extends State<CounterView> {
           FloatingActionButton(
             onPressed: () => setState(() => _controller.decrement()),
             tooltip: 'Decrement',
+            backgroundColor: Colors.redAccent,
             child: const Icon(Icons.remove),
           ),
           const SizedBox(width: 20),
           FloatingActionButton(
-            onPressed: () => setState(() => _controller.reset()),
+            // onPressed: () => setState(() => _controller.reset()),
+            onPressed: () => resetDialog(),
             tooltip: 'Reset',
+            backgroundColor: Colors.grey,
             child: const Icon(Icons.refresh),
           ),
           const SizedBox(width: 20),
           FloatingActionButton(
             onPressed: () => setState(() => _controller.increment()),
             tooltip: 'Increment',
+            backgroundColor: Colors.greenAccent,
             child: const Icon(Icons.add),
           ),
         ],
