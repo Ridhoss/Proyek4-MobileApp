@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:logbook_app_059/counter_controller.dart';
+import 'package:logbook_app_059/controller/counter_controller.dart';
 
 class HistorySection extends StatelessWidget {
   final CounterController controller;

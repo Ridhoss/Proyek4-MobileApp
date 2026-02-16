@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:logbook_app_059/components/header_bar.dart';
-import 'package:logbook_app_059/components/history_section.dart';
-import 'package:logbook_app_059/counter_controller.dart';
+import 'package:logbook_app_059/components/logbook/header_bar.dart';
+import 'package:logbook_app_059/components/logbook/history_section.dart';
+import 'package:logbook_app_059/controller/counter_controller.dart';
 
 class CounterView extends StatefulWidget {
-  const CounterView({super.key});
+  final String username;
+  const CounterView({super.key, required this.username});
+
   @override
   State<CounterView> createState() => _CounterViewState();
 }
@@ -42,7 +44,7 @@ class _CounterViewState extends State<CounterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HeaderBar(),
+      appBar: HeaderBar(username: widget.username),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -105,7 +107,6 @@ class _CounterViewState extends State<CounterView> {
           ),
           const SizedBox(width: 20),
           FloatingActionButton(
-            // onPressed: () => setState(() => _controller.reset()),
             onPressed: () => resetDialog(),
             tooltip: 'Reset',
             backgroundColor: Colors.grey,
