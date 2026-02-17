@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:logbook_app_059/features/auth/login_view.dart';
 import 'package:logbook_app_059/features/onboarding/onboarding_view.dart';
 
 class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
   final String username;
-  const HeaderBar({super.key, required this.username});
+  final dynamic controller;
+  const HeaderBar({
+    super.key,
+    required this.username,
+    required this.controller,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -12,6 +16,22 @@ class HeaderBar extends StatelessWidget implements PreferredSizeWidget {
       title: Text("LogBook: $username"),
       backgroundColor: Colors.yellow,
       actions: [
+        IconButton(
+          icon: const Icon(Icons.history),
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              builder: (_) {
+                return ListView.builder(
+                  itemCount: controller.history.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(title: Text(controller.history[index]));
+                  },
+                );
+              },
+            );
+          },
+        ),
         IconButton(
           icon: const Icon(Icons.logout),
           onPressed: () {

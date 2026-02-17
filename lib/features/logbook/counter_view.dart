@@ -12,7 +12,7 @@ class CounterView extends StatefulWidget {
 }
 
 class _CounterViewState extends State<CounterView> {
-  final CounterController _controller = CounterController();
+  late CounterController controller;
 
   void resetDialog() {
     showDialog(
@@ -30,7 +30,7 @@ class _CounterViewState extends State<CounterView> {
             ),
             ElevatedButton(
               onPressed: () {
-                setState(() => _controller.reset());
+                setState(() => controller.reset());
                 Navigator.pop(context);
               },
               child: const Text("Ya, Reset"),
@@ -44,54 +44,61 @@ class _CounterViewState extends State<CounterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HeaderBar(username: widget.username),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text("Total Hitungan:"),
-            Text('${_controller.value}', style: const TextStyle(fontSize: 60)),
-            SizedBox(
-              height: 80,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FloatingActionButton(
-                    onPressed: () => setState(() => _controller.decStep()),
-                    tooltip: 'Decrement',
-                    child: const Icon(Icons.remove),
-                  ),
-                  const SizedBox(width: 20),
-                  SizedBox(
-                    width: 80,
-                    child: TextField(
-                      textAlign: TextAlign.center,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+      appBar: HeaderBar(username: widget.username, controller: controller),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("Total Hitungan:"),
+                Text(
+                  '${controller.value}',
+                  style: const TextStyle(fontSize: 60),
+                ),
+                SizedBox(
+                  height: 80,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      FloatingActionButton(
+                        onPressed: () => setState(() => controller.decStep()),
+                        child: const Icon(Icons.remove),
                       ),
-                      controller: TextEditingController(
-                        text: _controller.step.toString(),
+                      const SizedBox(width: 20),
+                      SizedBox(
+                        width: 80,
+                        child: TextField(
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                          ),
+                          controller: TextEditingController(
+                            text: controller.step.toString(),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              controller.step = int.tryParse(value) ?? 1;
+                            });
+                          },
+                        ),
                       ),
-                      onChanged: (value) {
-                        setState(() {
-                          _controller.step = int.tryParse(value) ?? 1;
-                        });
-                      },
-                    ),
+                      const SizedBox(width: 20),
+                      FloatingActionButton(
+                        onPressed: () => setState(() => controller.incStep()),
+                        child: const Icon(Icons.add),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 20),
-                  FloatingActionButton(
-                    onPressed: () => setState(() => _controller.incStep()),
-                    tooltip: 'Increment',
-                    child: const Icon(Icons.add),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                HistorySection(controller: controller),
+                const SizedBox(height: 100), // biar tidak ketutup FAB
+              ],
             ),
-            SizedBox(height: 20),
-            HistorySection(controller: _controller),
-          ],
+          ),
         ),
       ),
 
@@ -100,7 +107,7 @@ class _CounterViewState extends State<CounterView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           FloatingActionButton(
-            onPressed: () => setState(() => _controller.decrement()),
+            onPressed: () => setState(() => controller.decrement()),
             tooltip: 'Decrement',
             backgroundColor: Colors.redAccent,
             child: const Icon(Icons.remove),
@@ -114,7 +121,7 @@ class _CounterViewState extends State<CounterView> {
           ),
           const SizedBox(width: 20),
           FloatingActionButton(
-            onPressed: () => setState(() => _controller.increment()),
+            onPressed: () => setState(() => controller.increment()),
             tooltip: 'Increment',
             backgroundColor: Colors.greenAccent,
             child: const Icon(Icons.add),
@@ -122,5 +129,14 @@ class _CounterViewState extends State<CounterView> {
         ],
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    controller = CounterController(widget.username);
+    controller.loadData().then((_) {
+      setState(() {});
+    });
   }
 }
