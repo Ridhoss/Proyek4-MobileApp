@@ -14,44 +14,64 @@ class LogView extends StatefulWidget {
 
 class _LogViewState extends State<LogView> {
   final LogController _controller = LogController();
+  String _searchQuery = "";
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: HeaderBar(username: widget.username),
-      body: ValueListenableBuilder<List<LogModel>>(
-        valueListenable: _controller.logsNotif,
-        builder: (context, currentLogs, child) {
-          if (currentLogs.isEmpty) {
-            return const Center(child: Text("Belum ada catatan."));
-          }
-          return ListView.builder(
-            itemCount: currentLogs.length,
-            itemBuilder: (context, index) {
-              final log = currentLogs[index];
-              return Card(
-                child: ListTile(
-                  leading: const Icon(Icons.note),
-                  title: Text(log.title),
-                  subtitle: Text(log.description),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () => _showEditLogDialog(index, log),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              decoration: const InputDecoration(
+                hintText: "Cari..",
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                _controller.searchLogs(value);
+              },
+            ),
+          ),
+          Expanded(
+            child: ValueListenableBuilder<List<LogModel>>(
+              valueListenable: _controller.logsNotif,
+              builder: (context, currentLogs, child) {
+                if (currentLogs.isEmpty) {
+                  return const Center(child: Text("Belum ada catatan."));
+                }
+                return ListView.builder(
+                  itemCount: currentLogs.length,
+                  itemBuilder: (context, index) {
+                    final log = currentLogs[index];
+                    return Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.note),
+                        title: Text(log.title),
+                        subtitle: Text(log.description),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => _showEditLogDialog(index, log),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _controller.removeLog(index),
+                            ),
+                          ],
+                        ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _controller.removeLog(index),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
@@ -67,7 +87,9 @@ class _LogViewState extends State<LogView> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => CounterView(username: widget.username)),
+                MaterialPageRoute(
+                  builder: (context) => CounterView(username: widget.username),
+                ),
               );
             },
             child: const Icon(Icons.calculate),
