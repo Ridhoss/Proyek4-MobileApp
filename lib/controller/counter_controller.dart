@@ -1,7 +1,5 @@
 import 'dart:convert';
-
 import 'package:shared_preferences/shared_preferences.dart';
-
 class CounterController {
   int _counter = 0;
   int step = 1;

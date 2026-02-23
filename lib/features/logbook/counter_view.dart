@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logbook_app_059/components/logbook/header_bar.dart';
 import 'package:logbook_app_059/components/logbook/history_section.dart';
 import 'package:logbook_app_059/controller/counter_controller.dart';
+import 'package:logbook_app_059/features/logbook/log_view.dart';
 
 class CounterView extends StatefulWidget {
   final String username;
@@ -125,6 +126,16 @@ class _CounterViewState extends State<CounterView> {
             tooltip: 'Increment',
             backgroundColor: Colors.greenAccent,
             child: const Icon(Icons.add),
+          ),
+          const SizedBox(width: 20),
+          FloatingActionButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LogView()),
+              );
+            },
+            child: const Icon(Icons.note),
           ),
         ],
       ),
