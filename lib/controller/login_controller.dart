@@ -1,5 +1,5 @@
 class LoginController {
-  final Map<String, String> _users = {"admin": "123", "ridho": "password"};
+  final Map<String, String> _users = {"admin": "123", "ridho": "123"};
 
   bool login(String username, String password) {
     if (_users.containsKey(username) &&

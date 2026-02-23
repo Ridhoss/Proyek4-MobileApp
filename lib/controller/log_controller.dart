@@ -13,11 +13,12 @@ class LogController {
     loadFromDisk();
   }
 
-  void addLog(String title, String desc) {
+  void addLog(String title, String desc, String category) {
     final newLog = LogModel(
       title: title,
       date: DateTime.now().toString(),
       description: desc,
+      category: category
     );
 
     _allLogs.add(newLog);
@@ -25,11 +26,12 @@ class LogController {
     saveToDisk();
   }
 
-  void updateLog(int index, String title, String desc) {
+  void updateLog(int index, String title, String desc, String category) {
     final updatedLog = LogModel(
       title: title,
       date: DateTime.now().toString(),
       description: desc,
+      category: category
     );
 
     _allLogs[index] = updatedLog;

@@ -14,7 +14,21 @@ class LogView extends StatefulWidget {
 
 class _LogViewState extends State<LogView> {
   final LogController _controller = LogController();
-  String _searchQuery = "";
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case "Kerja":
+        return Colors.green;
+      case "Kuliah":
+        return Colors.blue;
+      case "Urgent":
+        return Colors.red;
+      case "Pribadi":
+        return Colors.blue;
+      default:
+        return Colors.grey; // Lainnya
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +54,35 @@ class _LogViewState extends State<LogView> {
               valueListenable: _controller.logsNotif,
               builder: (context, currentLogs, child) {
                 if (currentLogs.isEmpty) {
-                  return const Center(child: Text("Belum ada catatan."));
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            Icons.note_alt_outlined,
+                            size: 80,
+                            color: Colors.grey,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            "Belum ada catatan",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            "Tekan tombol + untuk menambahkan catatan baru.",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
                 }
                 return ListView.builder(
                   itemCount: currentLogs.length,
@@ -50,12 +92,26 @@ class _LogViewState extends State<LogView> {
                       child: ListTile(
                         leading: const Icon(Icons.note),
                         title: Text(log.title),
-                        subtitle: Text(log.description),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(log.description),
+                            const SizedBox(height: 6),
+                            Chip(
+                              label: Text(log.category),
+                              backgroundColor: _getCategoryColor(log.category),
+                              labelStyle: const TextStyle(color: Colors.white),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
+                            ),
+                          ],
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              icon: const Icon(Icons.edit, color: Colors.green),
                               onPressed: () => _showEditLogDialog(index, log),
                             ),
                             IconButton(
@@ -101,22 +157,56 @@ class _LogViewState extends State<LogView> {
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
+  String _selectedCategory = "Pribadi";
+  final List<String> _categories = [
+    "Pribadi",
+    "Kuliah",
+    "Kerja",
+    "Urgent",
+    "Lainnya",
+  ];
 
   void _showAddLogDialog() {
+    _selectedCategory = _categories.first;
+    _titleController.clear();
+    _contentController.clear();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Tambah Catatan Baru"),
         content: Column(
-          mainAxisSize: MainAxisSize.min, // Agar dialog tidak memenuhi layar
+          mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(hintText: "Judul Catatan"),
             ),
+            const SizedBox(height: 12),
             TextField(
               controller: _contentController,
               decoration: const InputDecoration(hintText: "Isi Deskripsi"),
+            ),
+            const SizedBox(height: 25),
+            DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              decoration: const InputDecoration(
+                labelText: "Kategori",
+                border: OutlineInputBorder(),
+              ),
+              items: _categories
+                  .map(
+                    (category) => DropdownMenuItem(
+                      value: category,
+                      child: Text(category),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedCategory = value!;
+                });
+              },
             ),
           ],
         ),
@@ -130,9 +220,12 @@ class _LogViewState extends State<LogView> {
               _controller.addLog(
                 _titleController.text,
                 _contentController.text,
+                _selectedCategory,
               );
 
-              setState(() {});
+              setState(() {
+                _selectedCategory = _categories.first;
+              });
 
               _titleController.clear();
               _contentController.clear();
@@ -148,6 +241,7 @@ class _LogViewState extends State<LogView> {
   void _showEditLogDialog(int index, LogModel log) {
     _titleController.text = log.title;
     _contentController.text = log.description;
+    _selectedCategory = log.category;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -156,7 +250,29 @@ class _LogViewState extends State<LogView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(controller: _titleController),
+            const SizedBox(height: 25),
             TextField(controller: _contentController),
+            const SizedBox(height: 25),
+            DropdownButtonFormField<String>(
+              value: _selectedCategory,
+              decoration: const InputDecoration(
+                labelText: "Kategori",
+                border: OutlineInputBorder(),
+              ),
+              items: _categories
+                  .map(
+                    (category) => DropdownMenuItem(
+                      value: category,
+                      child: Text(category),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedCategory = value!;
+                });
+              },
+            ),
           ],
         ),
         actions: [
@@ -170,7 +286,13 @@ class _LogViewState extends State<LogView> {
                 index,
                 _titleController.text,
                 _contentController.text,
+                _selectedCategory,
               );
+
+              setState(() {
+                _selectedCategory = _categories.first;
+              });
+
               _titleController.clear();
               _contentController.clear();
               Navigator.pop(context);

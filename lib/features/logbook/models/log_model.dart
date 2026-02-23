@@ -2,11 +2,13 @@ class LogModel {
   final String title;
   final String date;
   final String description;
+  final String category;
 
   LogModel({
     required this.title,
     required this.date,
     required this.description,
+    required this.category
   });
 
   factory LogModel.fromMap(Map<String, dynamic> map) {
@@ -14,6 +16,7 @@ class LogModel {
       title: map['title'],
       date: map['date'],
       description: map['description'],
+      category: map['category'],
     );
   }
 
@@ -21,7 +24,8 @@ class LogModel {
     return {
       'title': title,
       'date': date,
-      'description': description
+      'description': description,
+      'category': category
     };
   }
 }
