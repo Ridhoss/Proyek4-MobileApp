@@ -15,6 +15,7 @@ class HistorySection extends StatelessWidget {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 10),
+
         SizedBox(
           height: 200,
           width: 300,
@@ -35,6 +36,27 @@ class HistorySection extends StatelessWidget {
                 title: Text(item),
               );
             },
+          ),
+        ),
+        SizedBox(height: 10),
+
+        SizedBox(
+          width: 300,
+          child: ElevatedButton(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (_) {
+                  return ListView.builder(
+                    itemCount: controller.history.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(title: Text(controller.history[index]));
+                    },
+                  );
+                },
+              );
+            },
+            child: const Text("View All History"),
           ),
         ),
       ],

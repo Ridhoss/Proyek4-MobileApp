@@ -45,7 +45,7 @@ class _CounterViewState extends State<CounterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HeaderBar(username: widget.username, controller: controller),
+      appBar: HeaderBar(username: widget.username),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 20),
@@ -127,16 +127,7 @@ class _CounterViewState extends State<CounterView> {
             backgroundColor: Colors.greenAccent,
             child: const Icon(Icons.add),
           ),
-          const SizedBox(width: 20),
-          FloatingActionButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const LogView()),
-              );
-            },
-            child: const Icon(Icons.note),
-          ),
+          const SizedBox(width: 20)
         ],
       ),
     );

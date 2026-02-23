@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:logbook_app_059/features/logbook/counter_view.dart';
+import 'package:logbook_app_059/features/logbook/log_view.dart';
 
 class SplashView extends StatefulWidget {
   final String username;
@@ -34,7 +34,7 @@ class _SplashViewState extends State<SplashView> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => CounterView(username: widget.username),
+          builder: (_) => LogView(username: widget.username),
         ),
       );
     });

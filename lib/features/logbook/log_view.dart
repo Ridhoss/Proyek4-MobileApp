@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:logbook_app_059/components/logbook/header_bar.dart';
 import 'package:logbook_app_059/controller/log_controller.dart';
+import 'package:logbook_app_059/features/logbook/counter_view.dart';
 import 'package:logbook_app_059/features/logbook/models/log_model.dart';
 
 class LogView extends StatefulWidget {
-  const LogView({super.key});
+  final String username;
+  const LogView({super.key, required this.username});
 
   @override
   State<LogView> createState() => _LogViewState();
@@ -15,7 +18,7 @@ class _LogViewState extends State<LogView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Log Book")),
+      appBar: HeaderBar(username: widget.username),
       body: ValueListenableBuilder<List<LogModel>>(
         valueListenable: _controller.logsNotif,
         builder: (context, currentLogs, child) {
@@ -50,9 +53,26 @@ class _LogViewState extends State<LogView> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddLogDialog,
-        child: const Icon(Icons.add),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: "add_log",
+            onPressed: _showAddLogDialog,
+            child: const Icon(Icons.add),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton(
+            heroTag: "counter_page",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CounterView(username: widget.username)),
+              );
+            },
+            child: const Icon(Icons.calculate),
+          ),
+        ],
       ),
     );
   }
