@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LogController {
   final ValueNotifier<List<LogModel>> logsNotif = ValueNotifier([]);
   static const String _key = 'user_logs_data';
+  static const String _counterKey = 'log_id_counter';
 
   final List<LogModel> _allLogs = [];
 
@@ -13,36 +14,44 @@ class LogController {
     loadFromDisk();
   }
 
-  void addLog(String title, String desc, String category) {
+  Future<void> addLog(int iduser, String title, String desc, String category)async {
+    final idbaru = await _getNextId();
+
     final newLog = LogModel(
+      id: idbaru,
+      iduser: iduser,
       title: title,
       date: DateTime.now().toString(),
       description: desc,
-      category: category
+      category: category,
     );
 
     _allLogs.add(newLog);
     logsNotif.value = List.from(_allLogs);
-    saveToDisk();
+    await saveToDisk();
   }
 
-  void updateLog(int index, String title, String desc, String category) {
+  Future<void> updateLog(int index, String title, String desc, String category)async {
+    final oldLog = _allLogs[index];
+
     final updatedLog = LogModel(
+      id: oldLog.id,
+      iduser: oldLog.iduser,
       title: title,
       date: DateTime.now().toString(),
       description: desc,
-      category: category
+      category: category,
     );
 
     _allLogs[index] = updatedLog;
     logsNotif.value = List.from(_allLogs);
-    saveToDisk();
+    await saveToDisk();
   }
 
-  void removeLog(int index) {
+  Future<void> removeLog(int index)async {
     _allLogs.removeAt(index);
     logsNotif.value = List.from(_allLogs);
-    saveToDisk();
+    await saveToDisk();
   }
 
   void searchLogs(String query) {
@@ -56,6 +65,16 @@ class LogController {
 
       logsNotif.value = filtered;
     }
+  }
+
+  Future<int> _getNextId() async {
+    final sp = await SharedPreferences.getInstance();
+    int currentId = sp.getInt(_counterKey) ?? 0;
+
+    currentId++;
+    await sp.setInt(_counterKey, currentId);
+
+    return currentId;
   }
 
   Future<void> saveToDisk() async {

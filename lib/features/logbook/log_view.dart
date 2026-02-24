@@ -24,9 +24,9 @@ class _LogViewState extends State<LogView> {
       case "Urgent":
         return Colors.red;
       case "Pribadi":
-        return Colors.blue;
+        return Colors.yellow;
       default:
-        return Colors.grey; // Lainnya
+        return Colors.grey;
     }
   }
 
@@ -88,40 +88,111 @@ class _LogViewState extends State<LogView> {
                   itemCount: currentLogs.length,
                   itemBuilder: (context, index) {
                     final log = currentLogs[index];
-                    return Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.note),
-                        title: Text(log.title),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(log.description),
-                            const SizedBox(height: 6),
-                            Chip(
-                              label: Text(log.category),
-                              backgroundColor: _getCategoryColor(log.category),
-                              labelStyle: const TextStyle(color: Colors.white),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
-                            ),
-                          ],
+
+                    return Dismissible(
+                      key: Key(log.date.toString()),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.green),
-                              onPressed: () => _showEditLogDialog(index, log),
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      onDismissed: (direction) {
+                        _controller.removeLog(index);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Catatan dihapus"),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        child: ListTile(
+                          leading: const Icon(Icons.note),
+                          title: Text(
+                            log.title,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _controller.removeLog(index),
-                            ),
-                          ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(log.description),
+                              const SizedBox(height: 6),
+                              Chip(
+                                label: Text(log.category),
+                                backgroundColor: _getCategoryColor(
+                                  log.category,
+                                ),
+                                labelStyle: const TextStyle(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.green),
+                            onPressed: () => _showEditLogDialog(index, log),
+                          ),
                         ),
                       ),
                     );
+
+                    // return Card(
+                    //   child: ListTile(
+                    //     leading: const Icon(Icons.note),
+                    //     title: Text(
+                    //       log.title,
+                    //       style: TextStyle(
+                    //         fontSize: 18,
+                    //         fontWeight:
+                    //             FontWeight.w600,
+                    //       ),
+                    //     ),
+                    //     subtitle: Column(
+                    //       crossAxisAlignment: CrossAxisAlignment.start,
+                    //       children: [
+                    //         Text(log.description),
+                    //         const SizedBox(height: 6),
+                    //         Chip(
+                    //           label: Text(log.category),
+                    //           backgroundColor: _getCategoryColor(log.category),
+                    //           labelStyle: const TextStyle(color: Colors.white),
+                    //           padding: const EdgeInsets.symmetric(
+                    //             horizontal: 8,
+                    //           ),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //     trailing: Row(
+                    //       mainAxisSize: MainAxisSize.min,
+                    //       children: [
+                    //         IconButton(
+                    //           icon: const Icon(Icons.edit, color: Colors.green),
+                    //           onPressed: () => _showEditLogDialog(index, log),
+                    //         ),
+                    //         IconButton(
+                    //           icon: const Icon(Icons.delete, color: Colors.red),
+                    //           onPressed: () => _controller.removeLog(index),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // );
                   },
                 );
               },
@@ -218,6 +289,7 @@ class _LogViewState extends State<LogView> {
           ElevatedButton(
             onPressed: () {
               _controller.addLog(
+                1,
                 _titleController.text,
                 _contentController.text,
                 _selectedCategory,
