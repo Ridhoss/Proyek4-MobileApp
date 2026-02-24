@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:logbook_app_059/components/logbook/header_bar.dart';
 import 'package:logbook_app_059/components/logbook/history_section.dart';
 import 'package:logbook_app_059/controller/counter_controller.dart';
+import 'package:logbook_app_059/features/logbook/models/user_model.dart';
 
 class CounterView extends StatefulWidget {
-  final String username;
-  const CounterView({super.key, required this.username});
+  final UserModel user;
+  const CounterView({super.key, required this.user});
 
   @override
   State<CounterView> createState() => _CounterViewState();
@@ -44,7 +45,7 @@ class _CounterViewState extends State<CounterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HeaderBar(username: widget.username),
+      appBar: HeaderBar(username: widget.user.username),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 20),
@@ -135,7 +136,7 @@ class _CounterViewState extends State<CounterView> {
   @override
   void initState() {
     super.initState();
-    controller = CounterController(widget.username);
+    controller = CounterController(widget.user.username);
     controller.loadData().then((_) {
       setState(() {});
     });

@@ -41,13 +41,15 @@ class _LoginViewState extends State<LoginView> {
       return;
     }
 
-    bool isSuccess = _controller.login(user, pass);
+    final userlogin = _controller.login(user, pass);
 
-    if (isSuccess) {
+    if (userlogin != null) {
       _loginAttempt = 0;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => SplashView(username: user)),
+        MaterialPageRoute(
+          builder: (context) => SplashView(user: userlogin),
+        ),
       );
     } else {
       _loginAttempt++;

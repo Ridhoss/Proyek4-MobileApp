@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:logbook_app_059/features/logbook/log_view.dart';
+import 'package:logbook_app_059/features/logbook/models/user_model.dart';
 
 class SplashView extends StatefulWidget {
-  final String username;
-  const SplashView({super.key, required this.username});
+  final UserModel user;
+  const SplashView({super.key, required this.user});
 
   @override
   State<SplashView> createState() => _SplashViewState();
@@ -34,7 +35,7 @@ class _SplashViewState extends State<SplashView> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => LogView(username: widget.username),
+          builder: (_) => LogView(user: widget.user),
         ),
       );
     });
@@ -64,7 +65,7 @@ class _SplashViewState extends State<SplashView> {
             ),
             const SizedBox(height: 10),
             Text(
-              "Selamat datang, ${widget.username}",
+              "Selamat datang, ${widget.user.username}",
               style: const TextStyle(
                 fontSize: 20,
                 color: Colors.white,

@@ -3,10 +3,11 @@ import 'package:logbook_app_059/components/logbook/header_bar.dart';
 import 'package:logbook_app_059/controller/log_controller.dart';
 import 'package:logbook_app_059/features/logbook/counter_view.dart';
 import 'package:logbook_app_059/features/logbook/models/log_model.dart';
+import 'package:logbook_app_059/features/logbook/models/user_model.dart';
 
 class LogView extends StatefulWidget {
-  final String username;
-  const LogView({super.key, required this.username});
+  final UserModel user;
+  const LogView({super.key, required this.user});
 
   @override
   State<LogView> createState() => _LogViewState();
@@ -24,16 +25,22 @@ class _LogViewState extends State<LogView> {
       case "Urgent":
         return Colors.red;
       case "Pribadi":
-        return Colors.yellow;
+        return Colors.teal;
       default:
         return Colors.grey;
     }
   }
 
   @override
+  void initState() {
+    super.initState();
+    _controller.loadFromDisk(widget.user.id);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HeaderBar(username: widget.username),
+      appBar: HeaderBar(username: widget.user.username),
       body: Column(
         children: [
           Padding(
@@ -151,48 +158,6 @@ class _LogViewState extends State<LogView> {
                         ),
                       ),
                     );
-
-                    // return Card(
-                    //   child: ListTile(
-                    //     leading: const Icon(Icons.note),
-                    //     title: Text(
-                    //       log.title,
-                    //       style: TextStyle(
-                    //         fontSize: 18,
-                    //         fontWeight:
-                    //             FontWeight.w600,
-                    //       ),
-                    //     ),
-                    //     subtitle: Column(
-                    //       crossAxisAlignment: CrossAxisAlignment.start,
-                    //       children: [
-                    //         Text(log.description),
-                    //         const SizedBox(height: 6),
-                    //         Chip(
-                    //           label: Text(log.category),
-                    //           backgroundColor: _getCategoryColor(log.category),
-                    //           labelStyle: const TextStyle(color: Colors.white),
-                    //           padding: const EdgeInsets.symmetric(
-                    //             horizontal: 8,
-                    //           ),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //     trailing: Row(
-                    //       mainAxisSize: MainAxisSize.min,
-                    //       children: [
-                    //         IconButton(
-                    //           icon: const Icon(Icons.edit, color: Colors.green),
-                    //           onPressed: () => _showEditLogDialog(index, log),
-                    //         ),
-                    //         IconButton(
-                    //           icon: const Icon(Icons.delete, color: Colors.red),
-                    //           onPressed: () => _controller.removeLog(index),
-                    //         ),
-                    //       ],
-                    //     ),
-                    //   ),
-                    // );
                   },
                 );
               },
@@ -215,7 +180,7 @@ class _LogViewState extends State<LogView> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => CounterView(username: widget.username),
+                  builder: (context) => CounterView(user: widget.user),
                 ),
               );
             },
@@ -289,7 +254,7 @@ class _LogViewState extends State<LogView> {
           ElevatedButton(
             onPressed: () {
               _controller.addLog(
-                1,
+                widget.user.id,
                 _titleController.text,
                 _contentController.text,
                 _selectedCategory,

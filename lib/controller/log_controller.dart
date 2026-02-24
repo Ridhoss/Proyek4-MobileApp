@@ -7,14 +7,16 @@ class LogController {
   final ValueNotifier<List<LogModel>> logsNotif = ValueNotifier([]);
   static const String _key = 'user_logs_data';
   static const String _counterKey = 'log_id_counter';
+  int? _currentUserId;
 
   final List<LogModel> _allLogs = [];
 
-  LogController() {
-    loadFromDisk();
-  }
-
-  Future<void> addLog(int iduser, String title, String desc, String category)async {
+  Future<void> addLog(
+    int iduser,
+    String title,
+    String desc,
+    String category,
+  ) async {
     final idbaru = await _getNextId();
 
     final newLog = LogModel(
@@ -27,11 +29,16 @@ class LogController {
     );
 
     _allLogs.add(newLog);
-    logsNotif.value = List.from(_allLogs);
+    _refreshUserLogs();
     await saveToDisk();
   }
 
-  Future<void> updateLog(int index, String title, String desc, String category)async {
+  Future<void> updateLog(
+    int index,
+    String title,
+    String desc,
+    String category,
+  ) async {
     final oldLog = _allLogs[index];
 
     final updatedLog = LogModel(
@@ -44,13 +51,13 @@ class LogController {
     );
 
     _allLogs[index] = updatedLog;
-    logsNotif.value = List.from(_allLogs);
+    _refreshUserLogs();
     await saveToDisk();
   }
 
-  Future<void> removeLog(int index)async {
+  Future<void> removeLog(int index) async {
     _allLogs.removeAt(index);
-    logsNotif.value = List.from(_allLogs);
+    _refreshUserLogs();
     await saveToDisk();
   }
 
@@ -86,9 +93,10 @@ class LogController {
     await sp.setString(_key, encodeData);
   }
 
-  Future<void> loadFromDisk() async {
+  Future<void> loadFromDisk(int iduser) async {
     final sp = await SharedPreferences.getInstance();
     final String? data = sp.getString(_key);
+    _currentUserId = iduser;
 
     if (data != null) {
       final List hasilData = jsonDecode(data);
@@ -97,7 +105,15 @@ class LogController {
       _allLogs.clear();
       _allLogs.addAll(loadedLogs);
 
-      logsNotif.value = List.from(_allLogs);
+      _refreshUserLogs();
     }
+  }
+
+  void _refreshUserLogs() {
+    if (_currentUserId == null) return;
+
+    logsNotif.value = _allLogs
+        .where((log) => log.iduser == _currentUserId)
+        .toList();
   }
 }
