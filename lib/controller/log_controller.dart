@@ -62,10 +62,16 @@ class LogController {
   }
 
   void searchLogs(String query) {
+    if (_currentUserId == null) return;
+
+    final userLogs = _allLogs
+        .where((log) => log.iduser == _currentUserId)
+        .toList();
+
     if (query.isEmpty) {
-      logsNotif.value = List.from(_allLogs);
+      logsNotif.value = userLogs;
     } else {
-      final filtered = _allLogs.where((log) {
+      final filtered = userLogs.where((log) {
         return log.title.toLowerCase().contains(query.toLowerCase()) ||
             log.description.toLowerCase().contains(query.toLowerCase());
       }).toList();
