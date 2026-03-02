@@ -1,5 +1,7 @@
+import 'package:mongo_dart/mongo_dart.dart';
+
 class LogModel {
-  final int id;
+  final ObjectId? id;
   final int iduser;
   final String title;
   final String date;
@@ -7,7 +9,7 @@ class LogModel {
   final String category;
 
   LogModel({
-    required this.id,
+    this.id,
     required this.iduser,
     required this.title,
     required this.date,
@@ -17,7 +19,7 @@ class LogModel {
 
   factory LogModel.fromMap(Map<String, dynamic> map) {
     return LogModel(
-      id: map['id'],
+      id: map['_id'] as ObjectId?,
       iduser: map['iduser'],
       title: map['title'],
       date: map['date'],
@@ -28,7 +30,7 @@ class LogModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      '_id': id ?? ObjectId(),
       'iduser': iduser,
       'title': title,
       'date': date,

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:logbook_app_059/features/logbook/models/log_model.dart';
+import 'package:logbook_app_059/helpers/log_helper.dart';
+import 'package:logbook_app_059/services/mongo_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LogController {
@@ -17,10 +19,8 @@ class LogController {
     String desc,
     String category,
   ) async {
-    final idbaru = await _getNextId();
 
     final newLog = LogModel(
-      id: idbaru,
       iduser: iduser,
       title: title,
       date: DateTime.now().toString(),
@@ -28,9 +28,20 @@ class LogController {
       category: category,
     );
 
-    _allLogs.add(newLog);
-    _refreshUserLogs();
-    await saveToDisk();
+    try {
+      await MongoService().insertLog(newLog);
+
+      final currentLogs = List<LogModel>.from(logsNotif.value);
+      currentLogs.add(newLog);
+      logsNotif.value = currentLogs;
+
+      await LogHelper.writeLog(
+        "SUCCESS: Tambah data dengan ID lokal",
+        source: "log_controller.dart",
+      );
+    } catch (e) {
+      await LogHelper.writeLog("ERROR: Gagal sinkronisasi Add - $e", level: 1);
+    }
   }
 
   Future<void> updateLog(
@@ -39,6 +50,7 @@ class LogController {
     String desc,
     String category,
   ) async {
+    final currentLogs = List<LogModel>.from(logsNotif.value);
     final oldLog = _allLogs[index];
 
     final updatedLog = LogModel(
@@ -50,15 +62,55 @@ class LogController {
       category: category,
     );
 
-    _allLogs[index] = updatedLog;
-    _refreshUserLogs();
-    await saveToDisk();
+    try {
+      await MongoService().updateLog(updatedLog);
+
+      currentLogs[index] = updatedLog;
+      logsNotif.value = currentLogs;
+
+      await LogHelper.writeLog(
+        "SUCCESS: Sinkronisasi Update '${oldLog.title}' Berhasil",
+        source: "log_controller.dart",
+        level: 2,
+      );
+    } catch (e) {
+      await LogHelper.writeLog(
+        "ERROR: Gagal sinkronisasi Update - $e",
+        source: "log_controller.dart",
+        level: 1,
+      );
+    }
   }
 
   Future<void> removeLog(int index) async {
-    _allLogs.removeAt(index);
-    _refreshUserLogs();
-    await saveToDisk();
+    final currentLogs = List<LogModel>.from(logsNotif.value);
+    final targetLog = currentLogs[index];
+
+    try {
+      if (targetLog.id == null) {
+        throw Exception(
+          "ID Log tidak ditemukan, tidak bisa menghapus di Cloud.",
+        );
+      }
+
+      await MongoService().deleteLog(targetLog.id!);
+
+      currentLogs.removeAt(index);
+      logsNotif.value = currentLogs;
+
+      await LogHelper.writeLog(
+        "SUCCESS: Sinkronisasi Hapus '${targetLog.title}' Berhasil",
+        source: "log_controller.dart",
+        level: 2,
+      );
+    } catch (e) {
+      await LogHelper.writeLog(
+        "ERROR: Gagal sinkronisasi Hapus - $e",
+        source: "log_controller.dart",
+        level: 1,
+      );
+    }
+
   }
 
   void searchLogs(String query) {
@@ -78,16 +130,6 @@ class LogController {
 
       logsNotif.value = filtered;
     }
-  }
-
-  Future<int> _getNextId() async {
-    final sp = await SharedPreferences.getInstance();
-    int currentId = sp.getInt(_counterKey) ?? 0;
-
-    currentId++;
-    await sp.setInt(_counterKey, currentId);
-
-    return currentId;
   }
 
   Future<void> saveToDisk() async {
@@ -113,6 +155,14 @@ class LogController {
 
       _refreshUserLogs();
     }
+  }
+
+  Future<void> loadFromCloud(int userId) async {
+    final logs = await MongoService().getLogs();
+    _allLogs.clear();
+    _allLogs.addAll(logs);
+    _currentUserId = userId;
+    _refreshUserLogs();
   }
 
   void _refreshUserLogs() {

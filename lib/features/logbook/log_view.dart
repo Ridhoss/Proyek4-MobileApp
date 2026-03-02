@@ -4,6 +4,8 @@ import 'package:logbook_app_059/controller/log_controller.dart';
 import 'package:logbook_app_059/features/logbook/counter_view.dart';
 import 'package:logbook_app_059/features/logbook/models/log_model.dart';
 import 'package:logbook_app_059/features/logbook/models/user_model.dart';
+import 'package:logbook_app_059/helpers/log_helper.dart';
+import 'package:logbook_app_059/services/mongo_service.dart';
 
 class LogView extends StatefulWidget {
   final UserModel user;
@@ -15,6 +17,7 @@ class LogView extends StatefulWidget {
 
 class _LogViewState extends State<LogView> {
   final LogController _controller = LogController();
+  bool _isLoading = false;
 
   Color _getCategoryColor(String category) {
     switch (category) {
@@ -35,6 +38,66 @@ class _LogViewState extends State<LogView> {
   void initState() {
     super.initState();
     _controller.loadFromDisk(widget.user.id);
+
+    Future.microtask(() => _initDatabase());
+  }
+
+  Future<void> _initDatabase() async {
+    setState(() => _isLoading = true);
+    try {
+      await LogHelper.writeLog(
+        "UI: Memulai inisialisasi database...",
+        source: "log_view.dart",
+      );
+
+      // Mencoba koneksi ke MongoDB Atlas (Cloud)
+      await LogHelper.writeLog(
+        "UI: Menghubungi MongoService.connect()...",
+        source: "log_view.dart",
+      );
+
+      // Mengaktifkan kembali koneksi dengan timeout 15 detik (lebih longgar untuk sinyal HP)
+      await MongoService().connect().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception(
+          "Koneksi Cloud Timeout. Periksa sinyal/IP Whitelist.",
+        ),
+      );
+
+      await LogHelper.writeLog(
+        "UI: Koneksi MongoService BERHASIL.",
+        source: "log_view.dart",
+      );
+
+      // Mengambil data log dari Cloud
+      await LogHelper.writeLog(
+        "UI: Memanggil controller.loadFromDisk()...",
+        source: "log_view.dart",
+      );
+
+      await _controller.loadFromDisk(widget.user.id);
+
+      await LogHelper.writeLog(
+        "UI: Data berhasil dimuat ke Notifier.",
+        source: "log_view.dart",
+      );
+    } catch (e) {
+      await LogHelper.writeLog(
+        "UI: Error - $e",
+        source: "log_view.dart",
+        level: 1,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Masalah: $e"), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+    await _controller.loadFromCloud(widget.user.id);
   }
 
   @override
@@ -60,6 +123,19 @@ class _LogViewState extends State<LogView> {
             child: ValueListenableBuilder<List<LogModel>>(
               valueListenable: _controller.logsNotif,
               builder: (context, currentLogs, child) {
+                if (_isLoading) {
+                  return const Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text("Menghubungkan ke MongoDB Atlas..."),
+                      ],
+                    ),
+                  );
+                }
+
                 if (currentLogs.isEmpty) {
                   return Center(
                     child: Padding(
@@ -67,30 +143,21 @@ class _LogViewState extends State<LogView> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
-                          Icon(
-                            Icons.note_alt_outlined,
-                            size: 80,
-                            color: Colors.grey,
-                          ),
+                          Icon(Icons.cloud_off, size: 80, color: Colors.grey),
                           SizedBox(height: 16),
                           Text(
-                            "Belum ada catatan",
+                            "Belum ada catatan di Cloud",
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            "Tekan tombol + untuk menambahkan catatan baru.",
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey),
                           ),
                         ],
                       ),
                     ),
                   );
                 }
+
                 return ListView.builder(
                   itemCount: currentLogs.length,
                   itemBuilder: (context, index) {

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logbook_app_059/features/onboarding/onboarding_view.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
@@ -12,9 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Logbook App',
-      theme: ThemeData(
-        colorScheme: .fromSeed(seedColor: Colors.blue),
-      ),
+      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.blue)),
       debugShowCheckedModeBanner: false,
       home: const OnboardingPage(),
     );
