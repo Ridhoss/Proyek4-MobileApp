@@ -17,6 +17,8 @@ class LogView extends StatefulWidget {
 
 class _LogViewState extends State<LogView> {
   final LogController _controller = LogController();
+  final TextEditingController _searchController = TextEditingController();
+
   bool _isLoading = false;
 
   Color _getCategoryColor(String category) {
@@ -37,7 +39,6 @@ class _LogViewState extends State<LogView> {
   @override
   void initState() {
     super.initState();
-    _controller.loadFromDisk(widget.user.id);
 
     Future.microtask(() => _initDatabase());
   }
@@ -49,14 +50,11 @@ class _LogViewState extends State<LogView> {
         "UI: Memulai inisialisasi database...",
         source: "log_view.dart",
       );
-
-      // Mencoba koneksi ke MongoDB Atlas (Cloud)
       await LogHelper.writeLog(
         "UI: Menghubungi MongoService.connect()...",
         source: "log_view.dart",
       );
 
-      // Mengaktifkan kembali koneksi dengan timeout 15 detik (lebih longgar untuk sinyal HP)
       await MongoService().connect().timeout(
         const Duration(seconds: 15),
         onTimeout: () => throw Exception(
@@ -69,13 +67,12 @@ class _LogViewState extends State<LogView> {
         source: "log_view.dart",
       );
 
-      // Mengambil data log dari Cloud
       await LogHelper.writeLog(
-        "UI: Memanggil controller.loadFromDisk()...",
+        "UI: Memanggil controller.loadFromCloud()...",
         source: "log_view.dart",
       );
 
-      await _controller.loadFromDisk(widget.user.id);
+      await _controller.loadFromCloud(widget.user.id);
 
       await LogHelper.writeLog(
         "UI: Data berhasil dimuat ke Notifier.",
@@ -97,7 +94,6 @@ class _LogViewState extends State<LogView> {
         setState(() => _isLoading = false);
       }
     }
-    await _controller.loadFromCloud(widget.user.id);
   }
 
   @override
@@ -109,6 +105,7 @@ class _LogViewState extends State<LogView> {
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
+              controller: _searchController,
               decoration: const InputDecoration(
                 hintText: "Cari..",
                 prefixIcon: Icon(Icons.search),
@@ -164,7 +161,7 @@ class _LogViewState extends State<LogView> {
                     final log = currentLogs[index];
 
                     return Dismissible(
-                      key: ValueKey(log.id),
+                      key: ValueKey(log.id.toString()),
                       direction: DismissDirection.endToStart,
                       background: Container(
                         decoration: BoxDecoration(
@@ -176,7 +173,9 @@ class _LogViewState extends State<LogView> {
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
                       onDismissed: (direction) {
-                        _controller.removeLog(index);
+                        final id = log.id;
+                        if (id == null) return;
+                        _controller.removeLog(id);
 
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -333,6 +332,7 @@ class _LogViewState extends State<LogView> {
 
               _titleController.clear();
               _contentController.clear();
+              _searchController.clear();
               Navigator.pop(context);
             },
             child: const Text("Simpan"),
@@ -353,9 +353,15 @@ class _LogViewState extends State<LogView> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: _titleController),
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(hintText: "Isi Judul"),
+            ),
             const SizedBox(height: 25),
-            TextField(controller: _contentController),
+            TextField(
+              controller: _contentController,
+              decoration: const InputDecoration(hintText: "Isi Deskripsi"),
+            ),
             const SizedBox(height: 25),
             DropdownButtonFormField<String>(
               value: _selectedCategory,
@@ -386,8 +392,11 @@ class _LogViewState extends State<LogView> {
           ),
           ElevatedButton(
             onPressed: () {
+              final id = log.id;
+              if (id == null) return;
+
               _controller.updateLog(
-                index,
+                id,
                 _titleController.text,
                 _contentController.text,
                 _selectedCategory,
@@ -399,6 +408,7 @@ class _LogViewState extends State<LogView> {
 
               _titleController.clear();
               _contentController.clear();
+              _searchController.clear();
               Navigator.pop(context);
             },
             child: const Text("Update"),

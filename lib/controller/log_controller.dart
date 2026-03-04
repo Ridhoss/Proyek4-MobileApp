@@ -1,14 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:logbook_app_059/features/logbook/models/log_model.dart';
 import 'package:logbook_app_059/helpers/log_helper.dart';
 import 'package:logbook_app_059/services/mongo_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LogController {
   final ValueNotifier<List<LogModel>> logsNotif = ValueNotifier([]);
-  static const String _key = 'user_logs_data';
-  static const String _counterKey = 'log_id_counter';
   int? _currentUserId;
 
   final List<LogModel> _allLogs = [];
@@ -19,21 +15,22 @@ class LogController {
     String desc,
     String category,
   ) async {
-
     final newLog = LogModel(
       iduser: iduser,
       title: title,
       date: DateTime.now().toString(),
-      description: desc,
+      description: desc.isEmpty ? "" : desc,
       category: category,
     );
 
     try {
-      await MongoService().insertLog(newLog);
-
       final currentLogs = List<LogModel>.from(logsNotif.value);
-      currentLogs.add(newLog);
+      final insertedLog = await MongoService().insertLog(newLog);
+
+      currentLogs.add(insertedLog);
       logsNotif.value = currentLogs;
+
+      _allLogs.add(insertedLog);
 
       await LogHelper.writeLog(
         "SUCCESS: Tambah data dengan ID lokal",
@@ -45,28 +42,31 @@ class LogController {
   }
 
   Future<void> updateLog(
-    int index,
+    String id,
     String title,
     String desc,
     String category,
   ) async {
-    final currentLogs = List<LogModel>.from(logsNotif.value);
-    final oldLog = _allLogs[index];
+    final indexAll = _allLogs.indexWhere((log) => log.id == id);
+
+    if (indexAll == -1) return;
+
+    final oldLog = _allLogs[indexAll];
 
     final updatedLog = LogModel(
       id: oldLog.id,
       iduser: oldLog.iduser,
       title: title,
       date: DateTime.now().toString(),
-      description: desc,
+      description: desc.trim(),
       category: category,
     );
 
     try {
       await MongoService().updateLog(updatedLog);
 
-      currentLogs[index] = updatedLog;
-      logsNotif.value = currentLogs;
+      _allLogs[indexAll] = updatedLog;
+      _refreshUserLogs();
 
       await LogHelper.writeLog(
         "SUCCESS: Sinkronisasi Update '${oldLog.title}' Berhasil",
@@ -82,24 +82,15 @@ class LogController {
     }
   }
 
-  Future<void> removeLog(int index) async {
-    final currentLogs = List<LogModel>.from(logsNotif.value);
-    final targetLog = currentLogs[index];
-
+  Future<void> removeLog(String id) async {
     try {
-      if (targetLog.id == null) {
-        throw Exception(
-          "ID Log tidak ditemukan, tidak bisa menghapus di Cloud.",
-        );
-      }
+      await MongoService().deleteLog(id);
 
-      await MongoService().deleteLog(targetLog.id!);
-
-      currentLogs.removeAt(index);
-      logsNotif.value = currentLogs;
+      _allLogs.removeWhere((log) => log.id == id);
+      _refreshUserLogs();
 
       await LogHelper.writeLog(
-        "SUCCESS: Sinkronisasi Hapus '${targetLog.title}' Berhasil",
+        "SUCCESS: Sinkronisasi Hapus Berhasil",
         source: "log_controller.dart",
         level: 2,
       );
@@ -110,51 +101,23 @@ class LogController {
         level: 1,
       );
     }
-
   }
 
   void searchLogs(String query) {
     if (_currentUserId == null) return;
 
-    final userLogs = _allLogs
-        .where((log) => log.iduser == _currentUserId)
-        .toList();
+    final lowQuery = query.trim().toLowerCase();
 
-    if (query.isEmpty) {
-      logsNotif.value = userLogs;
-    } else {
-      final filtered = userLogs.where((log) {
-        return log.title.toLowerCase().contains(query.toLowerCase()) ||
-            log.description.toLowerCase().contains(query.toLowerCase());
-      }).toList();
+    final filtered = _allLogs.where((log) {
+      if (log.iduser != _currentUserId) return false;
 
-      logsNotif.value = filtered;
-    }
-  }
+      if (lowQuery.isEmpty) return true;
 
-  Future<void> saveToDisk() async {
-    final sp = await SharedPreferences.getInstance();
-    final String encodeData = jsonEncode(
-      _allLogs.map((e) => e.toMap()).toList(),
-    );
+      return log.title.toLowerCase().contains(lowQuery) ||
+          log.description.toLowerCase().contains(lowQuery);
+    }).toList();
 
-    await sp.setString(_key, encodeData);
-  }
-
-  Future<void> loadFromDisk(int iduser) async {
-    final sp = await SharedPreferences.getInstance();
-    final String? data = sp.getString(_key);
-    _currentUserId = iduser;
-
-    if (data != null) {
-      final List hasilData = jsonDecode(data);
-      final loadedLogs = hasilData.map((e) => LogModel.fromMap(e)).toList();
-
-      _allLogs.clear();
-      _allLogs.addAll(loadedLogs);
-
-      _refreshUserLogs();
-    }
+    logsNotif.value = filtered;
   }
 
   Future<void> loadFromCloud(int userId) async {

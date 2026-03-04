@@ -81,15 +81,26 @@ class MongoService {
     }
   }
 
-  Future<void> insertLog(LogModel log) async {
+  Future<LogModel> insertLog(LogModel log) async {
     try {
       final collection = await _getSafeCollection();
-      await collection.insertOne(log.toMap());
+
+      final result = await collection.insertOne(log.toMap());
+      final insertedId = result.id as ObjectId;
 
       await LogHelper.writeLog(
         "SUCCESS: Data '${log.title}' Saved to Cloud",
         source: _source,
         level: 2,
+      );
+
+      return LogModel(
+        id: insertedId.toHexString(),
+        iduser: log.iduser,
+        title: log.title,
+        date: log.date,
+        description: log.description,
+        category: log.category,
       );
     } catch (e) {
       await LogHelper.writeLog(
@@ -108,7 +119,10 @@ class MongoService {
         throw Exception("ID Log tidak ditemukan untuk update");
       }
 
-      await collection.replaceOne(where.id(log.id!), log.toMap());
+      await collection.replaceOne(
+        where.id(ObjectId.fromHexString(log.id!)),
+        log.toMap(),
+      );
 
       await LogHelper.writeLog(
         "DATABASE: Update '${log.title}' Berhasil",
@@ -125,10 +139,10 @@ class MongoService {
     }
   }
 
-  Future<void> deleteLog(ObjectId id) async {
+  Future<void> deleteLog(String id) async {
     try {
       final collection = await _getSafeCollection();
-      await collection.remove(where.id(id));
+      await collection.remove(where.id(ObjectId.fromHexString(id)));
 
       await LogHelper.writeLog(
         "DATABASE: Hapus ID $id Berhasil",

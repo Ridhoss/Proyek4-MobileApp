@@ -1,7 +1,7 @@
 import 'package:mongo_dart/mongo_dart.dart';
 
 class LogModel {
-  final ObjectId? id;
+  final String? id;
   final int iduser;
   final String title;
   final String date;
@@ -18,8 +18,18 @@ class LogModel {
   });
 
   factory LogModel.fromMap(Map<String, dynamic> map) {
+    final rawId = map['_id'];
+
+    String? idString;
+
+    if (rawId is ObjectId) {
+      idString = rawId.toHexString();
+    } else if (rawId is String) {
+      idString = rawId;
+    }
+
     return LogModel(
-      id: map['_id'] as ObjectId?,
+      id: idString,
       iduser: map['iduser'],
       title: map['title'],
       date: map['date'],
@@ -29,13 +39,18 @@ class LogModel {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      '_id': id ?? ObjectId(),
+    final map = {
       'iduser': iduser,
       'title': title,
       'date': date,
       'description': description,
       'category': category,
     };
+
+    if (id != null) {
+      map['_id'] = ObjectId.fromHexString(id!);
+    }
+
+    return map;
   }
 }
