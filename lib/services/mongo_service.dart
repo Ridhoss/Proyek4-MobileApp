@@ -59,17 +59,19 @@ class MongoService {
     }
   }
 
-  Future<List<LogModel>> getLogs() async {
+  Future<List<LogModel>> getLogs(int teamId) async {
     try {
       final collection = await _getSafeCollection();
 
       await LogHelper.writeLog(
-        "INFO: Fetching data from Cloud...",
+        "INFO: Fetching data for Team: $teamId",
         source: _source,
         level: 3,
       );
 
-      final List<Map<String, dynamic>> data = await collection.find().toList();
+      final List<Map<String, dynamic>> data = await collection
+          .find(where.eq('teamId', teamId))
+          .toList();
       return data.map((json) => LogModel.fromMap(json)).toList();
     } catch (e) {
       await LogHelper.writeLog(
@@ -85,8 +87,7 @@ class MongoService {
     try {
       final collection = await _getSafeCollection();
 
-      final result = await collection.insertOne(log.toMap());
-      final insertedId = result.id as ObjectId;
+      await collection.insertOne(log.toMap());
 
       await LogHelper.writeLog(
         "SUCCESS: Data '${log.title}' Saved to Cloud",
@@ -94,14 +95,7 @@ class MongoService {
         level: 2,
       );
 
-      return LogModel(
-        id: insertedId.toHexString(),
-        iduser: log.iduser,
-        title: log.title,
-        date: log.date,
-        description: log.description,
-        category: log.category,
-      );
+      return log;
     } catch (e) {
       await LogHelper.writeLog(
         "ERROR: Insert Failed - $e",
@@ -142,7 +136,7 @@ class MongoService {
   Future<void> deleteLog(String id) async {
     try {
       final collection = await _getSafeCollection();
-      await collection.remove(where.id(ObjectId.fromHexString(id)));
+      await collection.deleteOne({"_id": id});
 
       await LogHelper.writeLog(
         "DATABASE: Hapus ID $id Berhasil",
