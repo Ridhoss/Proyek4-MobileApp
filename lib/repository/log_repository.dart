@@ -36,6 +36,7 @@ class LogRepository {
         date: log.date,
         description: log.description,
         category: log.category,
+        type: log.type,
         teamId: log.teamId,
         isSynced: true,
       );
@@ -48,10 +49,15 @@ class LogRepository {
   }
 
   Future<void> updateLog(LogModel log) async {
-    await local.saveLog(log);
+    final unsynced = log.copyWith(isSynced: false);
+
+    await local.saveLog(unsynced);
 
     try {
       await mongo.updateLog(log);
+
+      final synced = log.copyWith(isSynced: true);
+      await local.saveLog(synced);
     } catch (e) {
       await LogHelper.writeLog(
         "ERROR: Update cloud gagal - $e",
@@ -69,6 +75,7 @@ class LogRepository {
       date: log.date,
       description: log.description,
       category: log.category,
+      type: log.type,
       teamId: log.teamId,
       isSynced: false,
       isDeleted: true,
@@ -89,54 +96,50 @@ class LogRepository {
     }
   }
 
+  bool _isSyncing = false;
+
   Future<void> syncLogs() async {
-    final localLogs = await local.getLogsForSync();
+    if (_isSyncing) return;
+    _isSyncing = true;
 
-    final unsynced = localLogs.where((l) => !l.isSynced).toList();
+    try {
+      final localLogs = await local.getLogsForSync();
 
-    for (var log in unsynced) {
-      try {
-        if (log.isDeleted) {
-          await mongo.deleteLog(log.id!);
-          await local.deleteLog(log.id!);
+      final unsynced = localLogs.where((l) => !l.isSynced).toList();
+      for (var log in unsynced) {
+        try {
+          if (log.isDeleted) {
+            await mongo.deleteLog(log.id!);
+            await local.deleteLog(log.id!);
+
+            await LogHelper.writeLog(
+              "SYNC: Delete ${log.id} berhasil",
+              source: "sync_service.dart",
+              level: 2,
+            );
+
+            continue;
+          }
+
+          await mongo.upsertLog(log);
+
+          await local.saveLog(log.copyWith(isSynced: true));
 
           await LogHelper.writeLog(
-            "SYNC: Delete ${log.id} berhasil",
+            "SYNC: Insert ${log.id} berhasil",
             source: "sync_service.dart",
             level: 2,
           );
-
-          continue;
+        } catch (e) {
+          await LogHelper.writeLog(
+            "SYNC ERROR: $e",
+            source: "sync_service.dart",
+            level: 1,
+          );
         }
-
-        await mongo.insertLog(log);
-
-        final syncedLog = LogModel(
-          id: log.id,
-          iduser: log.iduser,
-          title: log.title,
-          date: log.date,
-          description: log.description,
-          category: log.category,
-          teamId: log.teamId,
-          isSynced: true,
-          isDeleted: false,
-        );
-
-        await local.saveLog(syncedLog);
-
-        await LogHelper.writeLog(
-          "SYNC: Insert ${log.id} berhasil",
-          source: "sync_service.dart",
-          level: 2,
-        );
-      } catch (e) {
-        await LogHelper.writeLog(
-          "SYNC ERROR: $e",
-          source: "sync_service.dart",
-          level: 1,
-        );
       }
+    } finally {
+      _isSyncing = false;
     }
   }
 }

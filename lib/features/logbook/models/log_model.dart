@@ -17,10 +17,12 @@ class LogModel {
   @HiveField(5)
   final String category;
   @HiveField(6)
-  final int teamId;
+  final String type;
   @HiveField(7)
-  final bool isSynced;
+  final int teamId;
   @HiveField(8)
+  final bool isSynced;
+  @HiveField(9)
   final bool isDeleted;
 
   LogModel({
@@ -30,9 +32,10 @@ class LogModel {
     required this.date,
     required this.description,
     required this.category,
+    required this.type,
     required this.teamId,
     this.isSynced = false,
-    this.isDeleted = false
+    this.isDeleted = false,
   });
 
   factory LogModel.fromMap(Map<String, dynamic> map) {
@@ -43,9 +46,10 @@ class LogModel {
       date: map['date'] ?? '',
       description: map['description'] ?? '',
       category: map['category'] ?? '',
+      type: map['type'] ?? '',
       teamId: map['teamId'] ?? 0,
       isSynced: map['isSynced'] ?? true,
-      isDeleted: map['isDeleted'] ?? false
+      isDeleted: map['isDeleted'] ?? false,
     );
   }
 
@@ -57,9 +61,36 @@ class LogModel {
       'date': date,
       'description': description,
       'category': category,
+      'type': type,
       'teamId': teamId,
     };
 
     return map;
+  }
+
+  LogModel copyWith({
+    String? id,
+    int? iduser,
+    String? title,
+    String? date,
+    String? description,
+    String? category,
+    String? type,
+    int? teamId,
+    bool? isSynced,
+    bool? isDeleted
+  }) {
+    return LogModel(
+      id: id ?? this.id,
+      iduser: iduser ?? this.iduser,
+      title: title ?? this.title,
+      date: date ?? this.date,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      type: type ?? this.type,
+      teamId: teamId ?? this.teamId,
+      isSynced: isSynced ?? this.isSynced,
+      isDeleted: isDeleted ?? this.isDeleted
+    );
   }
 }

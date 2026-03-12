@@ -23,14 +23,12 @@ class _LogViewState extends State<LogView> {
 
   Color _getCategoryColor(String category) {
     switch (category) {
-      case "Kerja":
+      case "Task":
         return Colors.green;
-      case "Kuliah":
+      case "Information":
         return Colors.blue;
-      case "Urgent":
+      case "Bug":
         return Colors.red;
-      case "Pribadi":
-        return Colors.teal;
       default:
         return Colors.grey;
     }
@@ -316,12 +314,21 @@ class _LogViewState extends State<LogView> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.storage, size: 16, color: Colors.green),
+        const Icon(Icons.storage, size: 18, color: Colors.green),
         const SizedBox(width: 6),
+
         Icon(
           Icons.cloud,
-          size: 16,
+          size: 18,
           color: log.isSynced ? Colors.green : Colors.grey,
+        ),
+
+        const SizedBox(width: 6),
+
+        Icon(
+          log.type == "Public" ? Icons.visibility : Icons.visibility_off,
+          size: 18,
+          color: log.type == "Public" ? Colors.green : Colors.red,
         ),
       ],
     );

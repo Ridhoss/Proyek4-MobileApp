@@ -24,6 +24,7 @@ class LogController {
     String title,
     String desc,
     String category,
+    String type,
     int teamId,
   ) async {
     final newLog = LogModel(
@@ -33,13 +34,15 @@ class LogController {
       date: DateTime.now().toString(),
       description: desc.trim(),
       category: category,
+      type: type,
       teamId: teamId,
       isSynced: false,
     );
 
-    final insertedLog = await repo.addLog(newLog);
+    await repo.addLog(newLog);
 
-    logsNotifier.value = [...logsNotifier.value, insertedLog];
+    final logs = await repo.getLogs(teamId);
+    logsNotifier.value = logs;
   }
 
   Future<void> updateLog(
@@ -47,6 +50,7 @@ class LogController {
     String title,
     String desc,
     String category,
+    String type,
     int teamId,
   ) async {
     final updatedLog = LogModel(
@@ -56,18 +60,15 @@ class LogController {
       date: DateTime.now().toString(),
       description: desc.trim(),
       category: category,
+      type: type,
       teamId: teamId,
+      isSynced: false,
     );
 
     await repo.updateLog(updatedLog);
 
-    final logs = [...logsNotifier.value];
-    final index = logs.indexWhere((log) => log.id == oldLog.id);
-
-    if (index != -1) {
-      logs[index] = updatedLog;
-      logsNotifier.value = logs;
-    }
+    final logs = await repo.getLogs(teamId);
+    logsNotifier.value = logs;
   }
 
   Future<void> removeLog(LogModel log) async {

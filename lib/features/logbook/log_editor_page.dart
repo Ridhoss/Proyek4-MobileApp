@@ -24,14 +24,11 @@ class _LogEditorPageState extends State<LogEditorPage> {
   late TextEditingController _titleController;
   late TextEditingController _descController;
 
-  String _selectedCategory = "Pribadi";
-  final List<String> _categories = [
-    "Pribadi",
-    "Kuliah",
-    "Kerja",
-    "Urgent",
-    "Lainnya",
-  ];
+  String _selectedCategory = "Task";
+  final List<String> _categories = ["Task", "Bug", "Information"];
+
+  String _selectedType = "Private";
+  final List<String> _type = ["Private", "Public"];
 
   @override
   void initState() {
@@ -40,6 +37,16 @@ class _LogEditorPageState extends State<LogEditorPage> {
     _descController = TextEditingController(
       text: widget.log?.description ?? '',
     );
+
+    if (widget.log != null) {
+      if (_categories.contains(widget.log!.category)) {
+        _selectedCategory = widget.log!.category;
+      }
+
+      if (_type.contains(widget.log!.type)) {
+        _selectedType = widget.log!.type;
+      }
+    }
 
     _descController.addListener(() {
       setState(() {});
@@ -53,7 +60,8 @@ class _LogEditorPageState extends State<LogEditorPage> {
         widget.currentUser.id,
         _titleController.text,
         _descController.text,
-        'Kerja',
+        _selectedCategory,
+        _selectedType,
         widget.currentUser.teamIds.first,
       );
     } else {
@@ -62,7 +70,8 @@ class _LogEditorPageState extends State<LogEditorPage> {
         widget.log!,
         _titleController.text,
         _descController.text,
-        'Kerja',
+        _selectedCategory,
+        _selectedType,
         widget.currentUser.teamIds.first,
       );
     }
@@ -103,7 +112,44 @@ class _LogEditorPageState extends State<LogEditorPage> {
                     controller: _titleController,
                     decoration: const InputDecoration(labelText: "Judul"),
                   ),
+
                   const SizedBox(height: 10),
+
+                  // CATEGORY DROPDOWN
+                  DropdownButtonFormField<String>(
+                    value: _selectedCategory,
+                    decoration: const InputDecoration(labelText: "Category"),
+                    items: _categories.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCategory = value!;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // TYPE DROPDOWN
+                  DropdownButtonFormField<String>(
+                    value: _selectedType,
+                    decoration: const InputDecoration(labelText: "Type"),
+                    items: _type.map((type) {
+                      return DropdownMenuItem(value: type, child: Text(type));
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedType = value!;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+
                   Expanded(
                     child: TextField(
                       controller: _descController,
